@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Data.Common;
+using System.Data.SqlClient;
 using Cw3.DAL;
 using Cw3.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +11,7 @@ namespace Cw3.Controllers
     [Route("api/students")]
     public class StudentsController : ControllerBase
     {
+       
         private readonly IDbService _dbService;
 
         public StudentsController(IDbService dbService)
@@ -17,22 +20,18 @@ namespace Cw3.Controllers
         }
         
         [HttpGet]
-        public IActionResult GetStudent(string orderBy)
+        public IActionResult GetStudent()
         {
             return Ok(_dbService.GetStudents());
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetStudent(int id)
+        public IActionResult GetStudent(string id)
         {
-            if (id == 1)
-            {
-                return Ok("Strupiechowski");
-            }else if (id == 2)
-            {
-                return Ok("Kowalski");
-            }
-
+            var st = _dbService.GetStudent(id);
+            if (st != null)
+                return Ok(st);
+            
             return NotFound("Nie znaleziono studenta");
         }
 
