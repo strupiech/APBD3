@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using Cw3.Models;
@@ -31,7 +32,7 @@ namespace Cw3.DAL
                         FirstName = dr["FirstName"].ToString(),
                         LastName = dr["LastName"].ToString(),
                         IndexNumber = dr["IndexNumber"].ToString(),
-                        BirthDate = dr["BirthDate"].ToString(),
+                        BirthDate = DateTime.Parse(dr["BirthDate"].ToString()),
                         Semester = dr["Semester"].ToString(),
                         StudiesName = dr["Name"].ToString()
                     });
@@ -59,7 +60,7 @@ namespace Cw3.DAL
                         FirstName = dr["FirstName"].ToString(),
                         LastName = dr["LastName"].ToString(),
                         IndexNumber = dr["IndexNumber"].ToString(),
-                        BirthDate = dr["BirthDate"].ToString(),
+                        BirthDate = DateTime.Parse(dr["BirthDate"].ToString()),
                         Semester = dr["Semester"].ToString(),
                         StudiesName = dr["Name"].ToString()
                     };

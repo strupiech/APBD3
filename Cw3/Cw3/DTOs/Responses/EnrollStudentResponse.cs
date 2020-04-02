@@ -1,9 +1,8 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+using System;
 
-namespace Cw3.Models
+namespace Cw3.DTOs.Responses
 {
-    public class Student
+    public class EnrollStudentResponse
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Data.Common;
-using System.Data.SqlClient;
 using Cw3.DAL;
 using Cw3.Models;
 using Microsoft.AspNetCore.Mvc;
