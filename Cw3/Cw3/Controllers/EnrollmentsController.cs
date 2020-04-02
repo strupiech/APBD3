@@ -23,7 +23,7 @@ namespace Cw3.Controllers
             _dbService.EnrollStudent(studentRequest);
             var response = new EnrollStudentResponse();
 
-            return Ok(response);
+            return CreatedAtAction("EnrollStudent", response);
         }
     }
 }

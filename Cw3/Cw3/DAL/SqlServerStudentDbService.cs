@@ -53,15 +53,23 @@ namespace Cw3.DAL
                     }
                     var idEnrollment = (int)dataReader["IdEnrollment"];
 
+                    command.CommandText = "SELECT 1 FROM Student WHERE IndexNumber = @indexNumber";
+                    command.Parameters.AddWithValue("indexNumber", request.IndexNumber);
+                    dataReader = command.ExecuteReader();
+                    if (dataReader.Read())
+                    {
+                        transaction.Rollback();
+                    }
+                    
                     command.CommandText =
                         "INSERT INTO Student(FirstName, LastName, IndexNumber, BirthDate, IdEnrollment) VALUES (@firstName, @lastName, @indexNumber, @birthDate, @idEnrollment)";
                     command.Parameters.AddWithValue("idEnrollment", idEnrollment);
                     command.Parameters.AddWithValue("birthDate", request.BirthDate);
                     command.Parameters.AddWithValue("firstName", request.FirstName);
                     command.Parameters.AddWithValue("lastName", request.LastName);
-                    command.Parameters.AddWithValue("indexNumber", request.IndexNumber);
-                    
+                    command.ExecuteNonQuery();
 
+                    transaction.Commit();
                 }
                 catch (SqlException ignored)
                 {
