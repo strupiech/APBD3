@@ -2,9 +2,8 @@ using System;
 using System.Data.SqlClient;
 using Cw3.DTOs.Requests;
 using Cw3.Models;
-using Microsoft.AspNetCore.Mvc;
 
-namespace Cw3.DAL
+namespace Cw3.Services
 {
     public class SqlServerStudentDbService : IStudentDbService
     {
@@ -78,9 +77,36 @@ namespace Cw3.DAL
             }
         }
 
-        public void PromoteStudents(int semester, string studies)
+        public void PromoteStudents(PromoteStudentsRequest studentsRequest)
         {
-            throw new System.NotImplementedException();
+            using (var connection = new SqlConnection())
+            using (var command = new SqlCommand())
+            {
+                command.Connection = connection;
+                
+                connection.Open();
+                var transaction = connection.BeginTransaction();
+
+                try
+                {
+                    command.CommandText = "SELECT IdEnrollment FROM Enrollment, Studies WHERE Enrollment.IdStudies = Studies.IdStudies AND Studies.Name = @studiesName AND Enrollment.Semester = @semester";
+                    command.Parameters.AddWithValue("studiesName", studentsRequest.StudiesName);
+                    command.Parameters.AddWithValue("semester", studentsRequest.Semester);
+
+                    var dataReader = command.ExecuteReader(); 
+                    if (!dataReader.Read())
+                    {
+                        transaction.Rollback();
+                    }
+
+                }
+                catch (SqlException ignored)
+                {
+                    transaction.Rollback();
+                }
+                
+                transaction.Commit();
+            }
         }
     }
 }

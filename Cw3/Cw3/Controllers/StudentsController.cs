@@ -1,6 +1,6 @@
 ﻿using System;
-using Cw3.DAL;
 using Cw3.Models;
+using Cw3.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cw3.Controllers

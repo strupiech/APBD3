@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using Cw3.Models;
 
-namespace Cw3.DAL
+namespace Cw3.Services
 {
     public class MockDbService : IDbService
     {
