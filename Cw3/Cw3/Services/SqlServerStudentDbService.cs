@@ -44,23 +44,27 @@ namespace Cw3.Services
                         return new BadRequestResult();
                     }
                     var idStudies = (int) dataReader["IdStudy"];
-                    command.CommandText = "SELECT IdEnrollment FROM Enrollment WHERE IdStudy = @idStudy AND Semester = 1";
+                    command.CommandText = "SELECT IdEnrollment FROM Enrollment WHERE IdStudy = @idStudy AND Semester = @semester";
                     command.Parameters.AddWithValue("idStudy", idStudies);
+                    command.Parameters.AddWithValue("semester", request.Semester);
                     dataReader.Close();
                     dataReader = command.ExecuteReader();
-     
+
+                    var idEnrollment = -1;
                     if (!dataReader.Read())
                     {
+                        command.CommandText = "SELECT MAX(IdEnrollment) as IdEnrollment FROM Enrollment";
+                        dataReader.Close();
+                        idEnrollment = Convert.ToInt32(command.ExecuteScalar()) + 1;
                         command.CommandText =
-                            "INSERT INTO Enrollments (Semester, IdStudy, StartDate) VALUES (1, @idStudy, @date)";    
+                            "INSERT INTO Enrollment (IdEnrollment, Semester, IdStudy, StartDate) VALUES (@newIdEnrollment ,@semester, @idStudy, @date)";    
                         command.Parameters.AddWithValue("date", DateTime.Now);
+                        command.Parameters.AddWithValue("newIdEnrollment", idEnrollment);
                         dataReader.Close();
                         command.ExecuteNonQuery();
-                        command.CommandText = "SELECT IdEnrollment FROM Enrollments WHERE IdStudy = @idstudy && Semester = 1";
-                        dataReader.Close();
-                        dataReader = command.ExecuteReader();
                     }
-                    var idEnrollment = (int)dataReader["IdEnrollment"];
+                    if(idEnrollment == -1)
+                        idEnrollment = (int)dataReader["IdEnrollment"];
 
                     command.CommandText = "SELECT 1 FROM Student WHERE IndexNumber = @indexNumber";
                     command.Parameters.AddWithValue("indexNumber", request.IndexNumber);
