@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Cw3.DTOs.Requests;
 using Cw3.DTOs.Responses;
 using Cw3.Models;
@@ -18,9 +20,9 @@ namespace Cw3.Controllers
         }
 
         [HttpPost]
-        public IActionResult EnrollStudent(EnrollStudentRequest studentRequest)
+        public async Task<IActionResult> EnrollStudent(EnrollStudentRequest studentRequest)
         {
-            _dbService.EnrollStudent(studentRequest);
+            await _dbService.EnrollStudent(studentRequest);
             var response = new EnrollStudentResponse();
 
             return CreatedAtAction("EnrollStudent", response);

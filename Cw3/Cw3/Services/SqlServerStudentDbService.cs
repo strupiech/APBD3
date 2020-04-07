@@ -37,31 +37,34 @@ namespace Cw3.Services
                     
                     command.Transaction = transaction;
                     var dataReader = command.ExecuteReader();
-                    
                     if (!dataReader.Read())
                     {
                         dataReader.Close();
                         transaction.Rollback();
                         return new BadRequestResult();
                     }
-                    var idStudies = (int) dataReader["IdStudies"];
-                    command.CommandText = "SELECT IdEnrollment FROM Enrollments WHERE IdStudy = @idstudy && Semester = 1";
-                    command.Parameters.AddWithValue("idstudy", idStudies);
+                    var idStudies = (int) dataReader["IdStudy"];
+                    command.CommandText = "SELECT IdEnrollment FROM Enrollment WHERE IdStudy = @idStudy AND Semester = 1";
+                    command.Parameters.AddWithValue("idStudy", idStudies);
+                    dataReader.Close();
                     dataReader = command.ExecuteReader();
-                    
+     
                     if (!dataReader.Read())
                     {
                         command.CommandText =
-                            "INSERT INTO Enrollments (Semester, IdStudy, StartDate) VALUES (1, @idstudy, @date)";    
+                            "INSERT INTO Enrollments (Semester, IdStudy, StartDate) VALUES (1, @idStudy, @date)";    
                         command.Parameters.AddWithValue("date", DateTime.Now);
+                        dataReader.Close();
                         command.ExecuteNonQuery();
                         command.CommandText = "SELECT IdEnrollment FROM Enrollments WHERE IdStudy = @idstudy && Semester = 1";
+                        dataReader.Close();
                         dataReader = command.ExecuteReader();
                     }
                     var idEnrollment = (int)dataReader["IdEnrollment"];
 
                     command.CommandText = "SELECT 1 FROM Student WHERE IndexNumber = @indexNumber";
                     command.Parameters.AddWithValue("indexNumber", request.IndexNumber);
+                    dataReader.Close();
                     dataReader = command.ExecuteReader();
                     if (dataReader.Read())
                     {
@@ -76,6 +79,7 @@ namespace Cw3.Services
                     command.Parameters.AddWithValue("birthDate", request.BirthDate);
                     command.Parameters.AddWithValue("firstName", request.FirstName);
                     command.Parameters.AddWithValue("lastName", request.LastName);
+                    dataReader.Close();
                     command.ExecuteNonQuery();
 
                     transaction.Commit();
@@ -83,6 +87,7 @@ namespace Cw3.Services
                 }
                 catch (SqlException ignored)
                 {
+                    Console.WriteLine(ignored.ToString());
                     transaction.Rollback();
                     return new BadRequestResult();
                 }
