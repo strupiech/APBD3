@@ -1,10 +1,12 @@
+using System.Threading.Tasks;
 using Cw3.DTOs.Requests;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Cw3.Services
 {
     public interface IStudentDbService
     {
-        void EnrollStudent(EnrollStudentRequest request);
-        void PromoteStudents(PromoteStudentsRequest request);
+        Task<IActionResult> EnrollStudent(EnrollStudentRequest request);
+        Task<IActionResult> PromoteStudents(PromoteStudentsRequest request);
     }
 }

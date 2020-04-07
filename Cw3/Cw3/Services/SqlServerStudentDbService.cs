@@ -1,13 +1,17 @@
 using System;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 using Cw3.DTOs.Requests;
 using Cw3.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Cw3.Services
 {
     public class SqlServerStudentDbService : IStudentDbService
     {
-        public void EnrollStudent(EnrollStudentRequest request)
+        private const string ConnectionString = "Data Source=db-mssql;Initial Catalog=s18747;Integrated Security=True";
+
+        public async Task<IActionResult>  EnrollStudent(EnrollStudentRequest request)
         {
             var student = new Student();
             student.FirstName = request.FirstName;
@@ -20,6 +24,7 @@ namespace Cw3.Services
             using (var connection = new SqlConnection())
             using (var command = new SqlCommand())
             {
+                connection.ConnectionString = ConnectionString;
                 command.Connection = connection;
                 
                 connection.Open();
@@ -29,16 +34,19 @@ namespace Cw3.Services
                 {
                     command.CommandText = "SELECT IdStudy FROM studies WHERE name = @studiesName";
                     command.Parameters.AddWithValue("studiesName", request.StudiesName);
-
+                    
+                    command.Transaction = transaction;
                     var dataReader = command.ExecuteReader();
+                    
                     if (!dataReader.Read())
                     {
+                        dataReader.Close();
                         transaction.Rollback();
+                        return new BadRequestResult();
                     }
-                    var idstudies = (int) dataReader["IdStudies"];
-
+                    var idStudies = (int) dataReader["IdStudies"];
                     command.CommandText = "SELECT IdEnrollment FROM Enrollments WHERE IdStudy = @idstudy && Semester = 1";
-                    command.Parameters.AddWithValue("idstudy", idstudies);
+                    command.Parameters.AddWithValue("idstudy", idStudies);
                     dataReader = command.ExecuteReader();
                     
                     if (!dataReader.Read())
@@ -57,7 +65,9 @@ namespace Cw3.Services
                     dataReader = command.ExecuteReader();
                     if (dataReader.Read())
                     {
+                        dataReader.Close();
                         transaction.Rollback();
+                        return new BadRequestResult();
                     }
                     
                     command.CommandText =
@@ -69,19 +79,22 @@ namespace Cw3.Services
                     command.ExecuteNonQuery();
 
                     transaction.Commit();
+                    return new AcceptedResult();
                 }
                 catch (SqlException ignored)
                 {
                     transaction.Rollback();
+                    return new BadRequestResult();
                 }
             }
         }
 
-        public void PromoteStudents(PromoteStudentsRequest studentsRequest)
+        public async Task<IActionResult> PromoteStudents(PromoteStudentsRequest studentsRequest)
         {
             using (var connection = new SqlConnection())
             using (var command = new SqlCommand())
             {
+                connection.ConnectionString = ConnectionString;
                 command.Connection = connection;
                 
                 connection.Open();
@@ -96,16 +109,20 @@ namespace Cw3.Services
                     var dataReader = command.ExecuteReader(); 
                     if (!dataReader.Read())
                     {
+                        dataReader.Close();
                         transaction.Rollback();
+                        return new BadRequestResult();
                     }
 
                 }
                 catch (SqlException ignored)
                 {
                     transaction.Rollback();
+                    return new BadRequestResult();
                 }
                 
                 transaction.Commit();
+                return new AcceptedResult();
             }
         }
     }
