@@ -15,8 +15,6 @@ namespace Cw3.DTOs.Requests
 
         [Required] [JsonConverter(typeof(JsonDateTimeConverter))] public DateTime BirthDate { get; set; }
 
-        [Required] public string Semester { get; set; }
-
         [Required] public string StudiesName { get; set; }
     }
 }

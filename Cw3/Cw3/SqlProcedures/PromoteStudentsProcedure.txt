@@ -1,0 +1,23 @@
+﻿USE [s18747]
+GO
+/****** Object:  StoredProcedure [dbo].[PromoteStudents]    Script Date: 08.04.2020 12:32:14 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[PromoteStudents] 
+@semester int, @studiesName varchar(100)
+AS
+BEGIN
+	DECLARE @newIdEnrollment int, @oldIdEnrollment int, @idStudies int;
+
+	SELECT @newIdEnrollment = IdEnrollment FROM Enrollment, Studies WHERE Enrollment.IdStudy = Studies.IdStudy AND Studies.Name = @studiesName AND Enrollment.Semester = @semester+1;
+	SELECT @oldIdEnrollment = IdEnrollment FROM Enrollment, Studies WHERE Enrollment.IdStudy = Studies.IdStudy AND Studies.Name = @studiesName AND Enrollment.Semester = @semester;
+	IF (@newIdEnrollment is NULL)
+	BEGIN
+		SELECT @idStudies = IdStudy FROM Studies WHERE Studies.Name = @studiesName;
+		SELECT @newIdEnrollment = MAX(IdEnrollment)+1 FROM Enrollment;	 
+		INSERT INTO Enrollment(IdEnrollment, Semester, IdStudy, StartDate)	VALUES (@newIdEnrollment, @semester+1, @idStudies, GETDATE());
+	END
+	UPDATE STUDENT SET IdEnrollment = @newIdEnrollment WHERE IdEnrollment = @oldIdEnrollment; 
+END

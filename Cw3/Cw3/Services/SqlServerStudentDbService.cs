@@ -17,7 +17,6 @@ namespace Cw3.Services
             student.FirstName = request.FirstName;
             student.LastName = request.LastName;
             student.IndexNumber = request.IndexNumber;
-            student.Semester = request.Semester;
             student.BirthDate = request.BirthDate;
             student.StudiesName = request.StudiesName;
 
@@ -46,7 +45,7 @@ namespace Cw3.Services
                     var idStudies = (int) dataReader["IdStudy"];
                     command.CommandText = "SELECT IdEnrollment FROM Enrollment WHERE IdStudy = @idStudy AND Semester = @semester";
                     command.Parameters.AddWithValue("idStudy", idStudies);
-                    command.Parameters.AddWithValue("semester", request.Semester);
+                    command.Parameters.AddWithValue("semester", 1);
                     dataReader.Close();
                     dataReader = command.ExecuteReader();
 
@@ -98,7 +97,7 @@ namespace Cw3.Services
             }
         }
 
-        public async Task<IActionResult> PromoteStudents(PromoteStudentsRequest studentsRequest)
+        public async Task<IActionResult> PromoteStudents(PromoteStudentsRequest request)
         {
             using (var connection = new SqlConnection())
             using (var command = new SqlCommand())
@@ -108,12 +107,13 @@ namespace Cw3.Services
                 
                 connection.Open();
                 var transaction = connection.BeginTransaction();
+                command.Transaction = transaction;
 
                 try
                 {
-                    command.CommandText = "SELECT IdEnrollment FROM Enrollment, Studies WHERE Enrollment.IdStudies = Studies.IdStudies AND Studies.Name = @studiesName AND Enrollment.Semester = @semester";
-                    command.Parameters.AddWithValue("studiesName", studentsRequest.StudiesName);
-                    command.Parameters.AddWithValue("semester", studentsRequest.Semester);
+                    command.CommandText = "SELECT IdEnrollment FROM Enrollment, Studies WHERE Enrollment.IdStudy = Studies.IdStudy AND Studies.Name = @studiesName AND Enrollment.Semester = @semester";
+                    command.Parameters.AddWithValue("studiesName", request.StudiesName);
+                    command.Parameters.AddWithValue("semester", request.Semester);
 
                     var dataReader = command.ExecuteReader(); 
                     if (!dataReader.Read())
@@ -123,9 +123,13 @@ namespace Cw3.Services
                         return new BadRequestResult();
                     }
 
+                    command.CommandText = $"Exec PromoteStudents {request.Semester},{request.StudiesName}";
+                    dataReader.Close();
+                    command.ExecuteNonQuery();
                 }
                 catch (SqlException ignored)
                 {
+                    Console.WriteLine(ignored);
                     transaction.Rollback();
                     return new BadRequestResult();
                 }
