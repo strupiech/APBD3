@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cw3.Services
 {
-    public class SqlServerStudentDbService : IStudentDbService
+    public class SqlServerStudentDbService : IDbService
     {
         private const string ConnectionString = "Data Source=db-mssql;Initial Catalog=s18747;Integrated Security=True";
 
@@ -138,5 +138,22 @@ namespace Cw3.Services
                 return new AcceptedResult();
             }
         }
+
+        public bool CheckIndexNumber(string index)
+        {
+            using(var connection = new SqlConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.ConnectionString = ConnectionString;
+                command.Connection = connection;
+                
+                connection.Open();
+                command.CommandText = "SELECT 1 FROM Student WHERE Student.IndexNumber = @index";
+                command.Parameters.AddWithValue("index", index);
+
+                var dataReader = command.ExecuteReader();
+                return dataReader.Read();
+            }
+        }
     }
-}
+} 

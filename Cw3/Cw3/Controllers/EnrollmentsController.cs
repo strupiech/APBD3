@@ -11,9 +11,9 @@ namespace Cw3.Controllers
     [Route("api/enrollments")]
     public class EnrollmentsController : ControllerBase
     {
-        private IStudentDbService _dbService;
+        private readonly IDbService _dbService;
 
-        public EnrollmentsController(IStudentDbService dbService)
+        public EnrollmentsController(IDbService dbService)
         {
             _dbService = dbService;
         }

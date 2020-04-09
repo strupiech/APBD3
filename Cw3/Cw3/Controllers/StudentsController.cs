@@ -10,9 +10,9 @@ namespace Cw3.Controllers
     public class StudentsController : ControllerBase
     {
        
-        private readonly IDbService _dbService;
+        private readonly ICustomDbService _dbService;
 
-        public StudentsController(IDbService dbService)
+        public StudentsController(ICustomDbService dbService)
         {
             _dbService = dbService;
         }

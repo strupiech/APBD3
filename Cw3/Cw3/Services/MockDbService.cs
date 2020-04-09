@@ -5,7 +5,7 @@ using Cw3.Models;
 
 namespace Cw3.Services
 {
-    public class MockDbService : IDbService
+    public class MockDbService : ICustomDbService
     {
         private static ICollection<Student> _students;
         private const string ConnectionString = "Data Source=db-mssql;Initial Catalog=s18747;Integrated Security=True";
