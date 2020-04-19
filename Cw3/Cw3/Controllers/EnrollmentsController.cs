@@ -1,9 +1,15 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using Cw3.DTOs.Requests;
 using Cw3.DTOs.Responses;
 using Cw3.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Cw3.Controllers
 {
@@ -12,13 +18,16 @@ namespace Cw3.Controllers
     public class EnrollmentsController : ControllerBase
     {
         private readonly IDbService _dbService;
+        public IConfiguration Configuration { get; set; }
 
-        public EnrollmentsController(IDbService dbService)
+        public EnrollmentsController(IDbService dbService, IConfiguration configuration)
         {
+            Configuration = configuration;
             _dbService = dbService;
         }
 
         [HttpPost]
+        [Authorize(Roles = "employee")]
         public async Task<IActionResult> EnrollStudent(EnrollStudentRequest request)
         {
             await _dbService.EnrollStudent(request);
@@ -36,6 +45,7 @@ namespace Cw3.Controllers
         }
 
         [HttpPost("promotions")]
+        [Authorize(Roles = "employee")]
         public async Task<IActionResult> PromoteStudents(PromoteStudentsRequest request)
         {
             await _dbService.PromoteStudents(request);
@@ -46,6 +56,34 @@ namespace Cw3.Controllers
             };
 
             return Ok(response);
+        }
+
+        [HttpPost]
+        public IActionResult Login(LoginRequest loginRequest)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "1"),
+                new Claim(ClaimTypes.Name, "Mateusz"),
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecretKey"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            
+            var token = new JwtSecurityToken
+            (
+                issuer: "Ja",
+                audience: "Students",
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(10),
+                signingCredentials: creds
+            );
+            
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                refreshToken= Guid.NewGuid()
+            });
         }
     }
 }
