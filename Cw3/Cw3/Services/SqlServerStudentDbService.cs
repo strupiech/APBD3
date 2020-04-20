@@ -155,5 +155,23 @@ namespace Cw3.Services
                 return dataReader.Read();
             }
         }
+
+        public bool CheckUserCredentials(string index, string password)
+        {
+            using(var connection = new SqlConnection())
+            using (var command = new SqlCommand())
+            {
+                connection.ConnectionString = ConnectionString;
+                command.Connection = connection;
+                
+                connection.Open();
+                command.CommandText = "SELECT 1 FROM Student WHERE Student.IndexNumber = @index AND Student.Password = @password";
+                command.Parameters.AddWithValue("index", index);
+                command.Parameters.AddWithValue("password", password);
+
+                var dataReader = command.ExecuteReader();
+                return dataReader.Read();
+            }
+        }
     }
 } 
