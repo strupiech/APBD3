@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,6 +27,12 @@ namespace Cw3
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<EfStudentDbService, SqlServerStudentDbService>();
+            services.AddDbContext<StrupiechContext>(options =>
+            {
+                options.UseSqlServer("Data Source=db-mssql;Initial Catalog=s18747;Integrated Security=True");
+            });
+            
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -43,7 +50,6 @@ namespace Cw3
             //    .AddScheme<AuthenticationSchemeOptions, BasicAuthHandler>("BasicAuthentication", null);
 
             services.AddTransient<IDbService, SqlServerStudentDbService>();
-            services.AddSingleton<ICustomDbService, MockDbService>();
             services.AddControllers()
                 .AddXmlSerializerFormatters();
         }

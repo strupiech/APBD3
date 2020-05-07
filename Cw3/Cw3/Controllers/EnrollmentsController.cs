@@ -21,12 +21,15 @@ namespace Cw3.Controllers
     public class EnrollmentsController : ControllerBase
     {
         private readonly IDbService _dbService;
+        private readonly EfStudentDbService _efDbService;
+
         public IConfiguration Configuration { get; set; }
 
-        public EnrollmentsController(IDbService dbService, IConfiguration configuration)
+        public EnrollmentsController(IDbService dbService, EfStudentDbService efDbService, IConfiguration configuration)
         {
             Configuration = configuration;
             _dbService = dbService;
+            _efDbService = efDbService;
         }
 
         [HttpPost]

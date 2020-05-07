@@ -2,12 +2,11 @@ using System;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 using Cw3.DTOs.Requests;
-using Cw3.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cw3.Services
 {
-    public class SqlServerStudentDbService : IDbService
+    public class SqlServerStudentDbService : IDbService, EfStudentDbService
     {
         private const string ConnectionString = "Data Source=db-mssql;Initial Catalog=s18747;Integrated Security=True";
 

@@ -1,15 +1,17 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
-namespace Cw3.Models
+namespace Cw3
 {
-    public class Student
+    public partial class Student
     {
+        public string IndexNumber { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string IndexNumber { get; set; }
         public DateTime BirthDate { get; set; }
-        public string Semester { get; set; }
+        public int IdEnrollment { get; set; }
         public string StudiesName { get; set; }
+
+        public virtual Enrollment IdEnrollmentNavigation { get; set; }
     }
 }
