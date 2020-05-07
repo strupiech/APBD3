@@ -27,7 +27,7 @@ namespace Cw3
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<EfStudentDbService, SqlServerStudentDbService>();
+            services.AddScoped<IDbService, SqlServerStudentDbService>();
             services.AddDbContext<StrupiechContext>(options =>
             {
                 options.UseSqlServer("Data Source=db-mssql;Initial Catalog=s18747;Integrated Security=True");
@@ -48,8 +48,7 @@ namespace Cw3
                 });
             //services.AddAuthentication("BasicAuthentication")
             //    .AddScheme<AuthenticationSchemeOptions, BasicAuthHandler>("BasicAuthentication", null);
-
-            services.AddTransient<IDbService, SqlServerStudentDbService>();
+            
             services.AddControllers()
                 .AddXmlSerializerFormatters();
         }

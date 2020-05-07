@@ -10,6 +10,9 @@ namespace Cw3.Services
     {
         Task<IActionResult> EnrollStudent(EnrollStudentRequest request);
         Task<IActionResult> PromoteStudents(PromoteStudentsRequest request);
+        Task<IActionResult> ModifyStudent(ModifyStudentRequest request);
+        Task<IActionResult> RemoveStudent(RemoveStudentRequest request);
+        Task<IActionResult> GetStudents();
         bool CheckIndexNumber(string index);
         bool CheckUserCredentials(string index, string password);
     }

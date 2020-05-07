@@ -1,14 +1,21 @@
 using System;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
 using Cw3.DTOs.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cw3.Services
 {
-    public class SqlServerStudentDbService : IDbService, EfStudentDbService
+    public class SqlServerStudentDbService : IDbService
     {
         private const string ConnectionString = "Data Source=db-mssql;Initial Catalog=s18747;Integrated Security=True";
+
+        private readonly StrupiechContext _context;
+        public SqlServerStudentDbService(StrupiechContext context)
+        {
+            _context = context;
+        }
 
         public async Task<IActionResult>  EnrollStudent(EnrollStudentRequest request)
         {
@@ -137,6 +144,34 @@ namespace Cw3.Services
                 return new AcceptedResult();
             }
         }
+        
+        public async Task<IActionResult> GetStudents()
+        {
+            return new OkObjectResult(_context.Student.ToList());
+        }
+
+        public async Task<IActionResult> ModifyStudent(ModifyStudentRequest request)
+        {
+            var student = _context.Student.First(st => st.IndexNumber == request.IndexNumber);
+            student.FirstName = request.FirstName;
+            student.LastName = request.LastName;
+            student.BirthDate = request.BirthDate;
+            if (request.IdEnrollment != 0)
+            {
+                student.IdEnrollment = request.IdEnrollment;
+            }
+
+            await _context.SaveChangesAsync();
+            return new OkObjectResult(student);
+        }
+
+        public async Task<IActionResult> RemoveStudent(RemoveStudentRequest request)
+        {
+            var student = _context.Student.First(s => s.IndexNumber == request.IndexNumber);
+            _context.Remove(student);
+            _context.SaveChanges();
+            return new OkObjectResult(student);
+        }
 
         public bool CheckIndexNumber(string index)
         {
@@ -158,7 +193,7 @@ namespace Cw3.Services
         public bool CheckUserCredentials(string index, string password)
         {
             using(var connection = new SqlConnection())
-            using (var command = new SqlCommand())
+            using(var command = new SqlCommand())
             {
                 connection.ConnectionString = ConnectionString;
                 command.Connection = connection;
@@ -172,5 +207,6 @@ namespace Cw3.Services
                 return dataReader.Read();
             }
         }
+        
     }
 } 
