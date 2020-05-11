@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Cw3.DTOs.Requests;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cw3.Services
 {
@@ -12,139 +13,92 @@ namespace Cw3.Services
         private const string ConnectionString = "Data Source=db-mssql;Initial Catalog=s18747;Integrated Security=True";
 
         private readonly StrupiechContext _context;
+
         public SqlServerStudentDbService(StrupiechContext context)
         {
             _context = context;
         }
 
-        public async Task<IActionResult>  EnrollStudent(EnrollStudentRequest request)
+        public async Task<IActionResult> EnrollStudent(EnrollStudentRequest request)
         {
-            var student = new Student();
-            student.FirstName = request.FirstName;
-            student.LastName = request.LastName;
-            student.IndexNumber = request.IndexNumber;
-            student.BirthDate = request.BirthDate;
-            student.StudiesName = request.StudiesName;
-
-            using (var connection = new SqlConnection())
-            using (var command = new SqlCommand())
+            try
             {
-                connection.ConnectionString = ConnectionString;
-                command.Connection = connection;
-                
-                connection.Open();
-                var transaction = connection.BeginTransaction();
+                var studiesId = Convert.ToInt32(_context.Studies.Where(st => st.Name == request.StudiesName).Select(
+                    st =>
+                        new
+                        {
+                            st.IdStudy
+                        }).FirstOrDefault());
 
-                try
+                if (studiesId == 0) return new BadRequestResult();
+
+                var enrollment = _context.Enrollment.FirstOrDefault(en => en.IdStudy == studiesId && en.Semester == 1);
+                int enrollmentId;
+                if (enrollment == null)
                 {
-                    command.CommandText = "SELECT IdStudy FROM studies WHERE name = @studiesName";
-                    command.Parameters.AddWithValue("studiesName", request.StudiesName);
-                    
-                    command.Transaction = transaction;
-                    var dataReader = command.ExecuteReader();
-                    if (!dataReader.Read())
+                    enrollmentId = _context.Enrollment.Max(enr => enr.IdEnrollment) + 1;
+                    _context.Enrollment.Add(new Enrollment()
                     {
-                        dataReader.Close();
-                        transaction.Rollback();
-                        return new BadRequestResult();
-                    }
-                    var idStudies = (int) dataReader["IdStudy"];
-                    command.CommandText = "SELECT IdEnrollment FROM Enrollment WHERE IdStudy = @idStudy AND Semester = @semester";
-                    command.Parameters.AddWithValue("idStudy", idStudies);
-                    command.Parameters.AddWithValue("semester", 1);
-                    dataReader.Close();
-                    dataReader = command.ExecuteReader();
-
-                    var idEnrollment = -1;
-                    if (!dataReader.Read())
-                    {
-                        command.CommandText = "SELECT MAX(IdEnrollment) as IdEnrollment FROM Enrollment";
-                        dataReader.Close();
-                        idEnrollment = Convert.ToInt32(command.ExecuteScalar()) + 1;
-                        command.CommandText =
-                            "INSERT INTO Enrollment (IdEnrollment, Semester, IdStudy, StartDate) VALUES (@newIdEnrollment ,@semester, @idStudy, @date)";    
-                        command.Parameters.AddWithValue("date", DateTime.Now);
-                        command.Parameters.AddWithValue("newIdEnrollment", idEnrollment);
-                        dataReader.Close();
-                        command.ExecuteNonQuery();
-                    }
-                    if(idEnrollment == -1)
-                        idEnrollment = (int)dataReader["IdEnrollment"];
-
-                    command.CommandText = "SELECT 1 FROM Student WHERE IndexNumber = @indexNumber";
-                    command.Parameters.AddWithValue("indexNumber", request.IndexNumber);
-                    dataReader.Close();
-                    dataReader = command.ExecuteReader();
-                    if (dataReader.Read())
-                    {
-                        dataReader.Close();
-                        transaction.Rollback();
-                        return new BadRequestResult();
-                    }
-                    
-                    command.CommandText =
-                        "INSERT INTO Student(FirstName, LastName, IndexNumber, BirthDate, IdEnrollment) VALUES (@firstName, @lastName, @indexNumber, @birthDate, @idEnrollment)";
-                    command.Parameters.AddWithValue("idEnrollment", idEnrollment);
-                    command.Parameters.AddWithValue("birthDate", request.BirthDate);
-                    command.Parameters.AddWithValue("firstName", request.FirstName);
-                    command.Parameters.AddWithValue("lastName", request.LastName);
-                    dataReader.Close();
-                    command.ExecuteNonQuery();
-
-                    transaction.Commit();
-                    return new AcceptedResult();
+                        IdEnrollment = enrollmentId,
+                        Semester = 1,
+                        IdStudy = studiesId,
+                        StartDate = DateTime.Now
+                    });
                 }
-                catch (SqlException ignored)
+                else
+                    enrollmentId = enrollment.IdEnrollment;
+
+                var newStudent = _context.Student.First(st => st.IndexNumber == request.IndexNumber);
+
+                if (newStudent != null) return new BadRequestResult();
+
+                _context.Student.Add(new Student()
                 {
-                    Console.WriteLine(ignored.ToString());
-                    transaction.Rollback();
-                    return new BadRequestResult();
-                }
+                    IdEnrollment = enrollmentId,
+                    BirthDate = request.BirthDate,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName
+                });
+
+                await _context.SaveChangesAsync();
+                return new AcceptedResult();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+                return new BadRequestResult();
             }
         }
 
         public async Task<IActionResult> PromoteStudents(PromoteStudentsRequest request)
         {
-            using (var connection = new SqlConnection())
-            using (var command = new SqlCommand())
+            try
             {
-                connection.ConnectionString = ConnectionString;
-                command.Connection = connection;
-                
-                connection.Open();
-                var transaction = connection.BeginTransaction();
-                command.Transaction = transaction;
-
-                try
-                {
-                    command.CommandText = "SELECT IdEnrollment FROM Enrollment, Studies WHERE Enrollment.IdStudy = Studies.IdStudy AND Studies.Name = @studiesName AND Enrollment.Semester = @semester";
-                    command.Parameters.AddWithValue("studiesName", request.StudiesName);
-                    command.Parameters.AddWithValue("semester", request.Semester);
-
-                    var dataReader = command.ExecuteReader(); 
-                    if (!dataReader.Read())
+                var enrollment = _context.Enrollment.Join(_context.Studies,
+                    en => en.IdStudy,
+                    st => st.IdStudy,
+                    (en, st) => new
                     {
-                        dataReader.Close();
-                        transaction.Rollback();
-                        return new BadRequestResult();
-                    }
+                        enrolIdStud = en.IdStudy,
+                        studIdStud = st.IdStudy,
+                        st.Name,
+                        en.Semester
+                    }).FirstOrDefault(arg => arg.enrolIdStud == arg.studIdStud &&
+                                             arg.Name == request.StudiesName &&
+                                             arg.Semester == request.Semester);
 
-                    command.CommandText = $"Exec PromoteStudents {request.Semester},{request.StudiesName}";
-                    dataReader.Close();
-                    command.ExecuteNonQuery();
-                }
-                catch (SqlException ignored)
-                {
-                    Console.WriteLine(ignored);
-                    transaction.Rollback();
-                    return new BadRequestResult();
-                }
-                
-                transaction.Commit();
+                if (enrollment == null) return new BadRequestResult();
+
+                _context.Database.ExecuteSqlInterpolated($"PromoteStudents {request.Semester},{request.StudiesName}");
                 return new AcceptedResult();
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return new BadRequestResult();
+            }
         }
-        
+
         public async Task<IActionResult> GetStudents()
         {
             return new OkObjectResult(_context.Student.ToList());
@@ -153,6 +107,7 @@ namespace Cw3.Services
         public async Task<IActionResult> ModifyStudent(ModifyStudentRequest request)
         {
             var student = _context.Student.First(st => st.IndexNumber == request.IndexNumber);
+            if (student == null) return new BadRequestResult();
             student.FirstName = request.FirstName;
             student.LastName = request.LastName;
             student.BirthDate = request.BirthDate;
@@ -168,6 +123,7 @@ namespace Cw3.Services
         public async Task<IActionResult> RemoveStudent(RemoveStudentRequest request)
         {
             var student = _context.Student.First(s => s.IndexNumber == request.IndexNumber);
+            if (student == null) return new BadRequestResult();
             _context.Remove(student);
             _context.SaveChanges();
             return new OkObjectResult(student);
@@ -175,12 +131,12 @@ namespace Cw3.Services
 
         public bool CheckIndexNumber(string index)
         {
-            using(var connection = new SqlConnection())
+            using (var connection = new SqlConnection())
             using (var command = new SqlCommand())
             {
                 connection.ConnectionString = ConnectionString;
                 command.Connection = connection;
-                
+
                 connection.Open();
                 command.CommandText = "SELECT 1 FROM Student WHERE Student.IndexNumber = @index";
                 command.Parameters.AddWithValue("index", index);
@@ -192,14 +148,15 @@ namespace Cw3.Services
 
         public bool CheckUserCredentials(string index, string password)
         {
-            using(var connection = new SqlConnection())
-            using(var command = new SqlCommand())
+            using (var connection = new SqlConnection())
+            using (var command = new SqlCommand())
             {
                 connection.ConnectionString = ConnectionString;
                 command.Connection = connection;
-                
+
                 connection.Open();
-                command.CommandText = "SELECT 1 FROM Student WHERE Student.IndexNumber = @index AND Student.Password = @password";
+                command.CommandText =
+                    "SELECT 1 FROM Student WHERE Student.IndexNumber = @index AND Student.Password = @password";
                 command.Parameters.AddWithValue("index", index);
                 command.Parameters.AddWithValue("password", password);
 
@@ -207,6 +164,5 @@ namespace Cw3.Services
                 return dataReader.Read();
             }
         }
-        
     }
-} 
+}
