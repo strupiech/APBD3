@@ -50,9 +50,9 @@ namespace Cw3.Services
 
                 var newStudent = _context.Student.First(st => st.IndexNumber == request.IndexNumber);
 
-                if (newStudent != null) return new BadRequestResult();
+                if (newStudent == null) return new BadRequestResult();
 
-                _context.Student.Add(new Student()
+                    _context.Student.Add(new Student()
                 {
                     IdEnrollment = enrollmentId,
                     BirthDate = request.BirthDate,
@@ -72,31 +72,32 @@ namespace Cw3.Services
 
         public async Task<IActionResult> PromoteStudents(PromoteStudentsRequest request)
         {
+            var enrollment = _context.Enrollment.Join(_context.Studies,
+                en => en.IdStudy,
+                st => st.IdStudy,
+                (en, st) => new
+                {
+                    enrolIdStud = en.IdStudy,
+                    studIdStud = st.IdStudy,
+                    st.Name,
+                    en.Semester
+                }).FirstOrDefault(arg => arg.enrolIdStud == arg.studIdStud &&
+                                         arg.Name == request.StudiesName &&
+                                         arg.Semester == request.Semester);
+
+            if (enrollment == null) return new BadRequestResult();
+
             try
             {
-                var enrollment = _context.Enrollment.Join(_context.Studies,
-                    en => en.IdStudy,
-                    st => st.IdStudy,
-                    (en, st) => new
-                    {
-                        enrolIdStud = en.IdStudy,
-                        studIdStud = st.IdStudy,
-                        st.Name,
-                        en.Semester
-                    }).FirstOrDefault(arg => arg.enrolIdStud == arg.studIdStud &&
-                                             arg.Name == request.StudiesName &&
-                                             arg.Semester == request.Semester);
-
-                if (enrollment == null) return new BadRequestResult();
-
                 _context.Database.ExecuteSqlInterpolated($"PromoteStudents {request.Semester},{request.StudiesName}");
-                return new AcceptedResult();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 return new BadRequestResult();
             }
+
+            return new AcceptedResult();
         }
 
         public async Task<IActionResult> GetStudents()
@@ -106,8 +107,10 @@ namespace Cw3.Services
 
         public async Task<IActionResult> ModifyStudent(ModifyStudentRequest request)
         {
-            var student = _context.Student.First(st => st.IndexNumber == request.IndexNumber);
+            var student = _context.Student.FirstOrDefault(st => st.IndexNumber == request.IndexNumber);
+
             if (student == null) return new BadRequestResult();
+
             student.FirstName = request.FirstName;
             student.LastName = request.LastName;
             student.BirthDate = request.BirthDate;
@@ -122,10 +125,12 @@ namespace Cw3.Services
 
         public async Task<IActionResult> RemoveStudent(RemoveStudentRequest request)
         {
-            var student = _context.Student.First(s => s.IndexNumber == request.IndexNumber);
+            var student = _context.Student.FirstOrDefault(s => s.IndexNumber == request.IndexNumber);
+            
             if (student == null) return new BadRequestResult();
+            
             _context.Remove(student);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return new OkObjectResult(student);
         }
 
