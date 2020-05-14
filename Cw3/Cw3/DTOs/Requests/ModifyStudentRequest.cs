@@ -9,6 +9,6 @@ namespace Cw3.DTOs.Requests
         [Required] public string FirstName { get; set; }
         [Required] public string LastName { get; set; }
         [Required] public DateTime BirthDate { get; set; }
-        public int IdEnrollment { get; set; }
+        [Required]public int IdEnrollment { get; set; }
     }
 }

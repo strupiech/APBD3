@@ -21,53 +21,45 @@ namespace Cw3.Services
 
         public async Task<IActionResult> EnrollStudent(EnrollStudentRequest request)
         {
-            try
-            {
-                var studiesId = Convert.ToInt32(_context.Studies.Where(st => st.Name == request.StudiesName).Select(
-                    st =>
-                        new
-                        {
-                            st.IdStudy
-                        }).FirstOrDefault());
-
-                if (studiesId == 0) return new BadRequestResult();
-
-                var enrollment = _context.Enrollment.FirstOrDefault(en => en.IdStudy == studiesId && en.Semester == 1);
-                int enrollmentId;
-                if (enrollment == null)
-                {
-                    enrollmentId = _context.Enrollment.Max(enr => enr.IdEnrollment) + 1;
-                    _context.Enrollment.Add(new Enrollment()
+            var studiesId = Convert.ToInt32(_context.Studies.Where(st => st.Name == request.StudiesName).Select(
+                st =>
+                    new
                     {
-                        IdEnrollment = enrollmentId,
-                        Semester = 1,
-                        IdStudy = studiesId,
-                        StartDate = DateTime.Now
-                    });
-                }
-                else
-                    enrollmentId = enrollment.IdEnrollment;
+                        st.IdStudy
+                    }).FirstOrDefault());
 
-                var newStudent = _context.Student.First(st => st.IndexNumber == request.IndexNumber);
+            if (studiesId == 0) return new BadRequestResult();
 
-                if (newStudent == null) return new BadRequestResult();
-
-                    _context.Student.Add(new Student()
+            var enrollment = _context.Enrollment.FirstOrDefault(en => en.IdStudy == studiesId && en.Semester == 1);
+            int enrollmentId;
+            if (enrollment == null)
+            {
+                enrollmentId = _context.Enrollment.Max(enr => enr.IdEnrollment) + 1;
+                _context.Enrollment.Add(new Enrollment()
                 {
                     IdEnrollment = enrollmentId,
-                    BirthDate = request.BirthDate,
-                    FirstName = request.FirstName,
-                    LastName = request.LastName
+                    Semester = 1,
+                    IdStudy = studiesId,
+                    StartDate = DateTime.Now
                 });
+            }
+            else
+                enrollmentId = enrollment.IdEnrollment;
 
-                await _context.SaveChangesAsync();
-                return new AcceptedResult();
-            }
-            catch (Exception e)
+            var newStudent = _context.Student.FirstOrDefault(st => st.IndexNumber == request.IndexNumber);
+
+            if (newStudent == null) return new BadRequestResult();
+
+            _context.Student.Add(new Student()
             {
-                Console.WriteLine(e.StackTrace);
-                return new BadRequestResult();
-            }
+                IdEnrollment = enrollmentId,
+                BirthDate = request.BirthDate,
+                FirstName = request.FirstName,
+                LastName = request.LastName
+            });
+
+            await _context.SaveChangesAsync();
+            return new AcceptedResult();
         }
 
         public async Task<IActionResult> PromoteStudents(PromoteStudentsRequest request)
@@ -114,11 +106,8 @@ namespace Cw3.Services
             student.FirstName = request.FirstName;
             student.LastName = request.LastName;
             student.BirthDate = request.BirthDate;
-            if (request.IdEnrollment != 0)
-            {
-                student.IdEnrollment = request.IdEnrollment;
-            }
-
+            student.IdEnrollment = request.IdEnrollment;
+            
             await _context.SaveChangesAsync();
             return new OkObjectResult(student);
         }
@@ -126,9 +115,9 @@ namespace Cw3.Services
         public async Task<IActionResult> RemoveStudent(RemoveStudentRequest request)
         {
             var student = _context.Student.FirstOrDefault(s => s.IndexNumber == request.IndexNumber);
-            
+
             if (student == null) return new BadRequestResult();
-            
+
             _context.Remove(student);
             await _context.SaveChangesAsync();
             return new OkObjectResult(student);

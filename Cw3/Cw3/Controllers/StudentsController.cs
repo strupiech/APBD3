@@ -25,7 +25,7 @@ namespace Cw3.Controllers
             return Ok(await _dbService.GetStudents());
         }
 
-        [HttpPost("add")]
+        [HttpPut("modify")]
         public async Task<IActionResult> ModifyStudent(ModifyStudentRequest request)
         {
             return Ok(await _dbService.ModifyStudent(request));
