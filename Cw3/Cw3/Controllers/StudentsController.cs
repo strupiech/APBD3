@@ -31,7 +31,7 @@ namespace Cw3.Controllers
             return await _dbService.ModifyStudent(request);
         }
         
-        [HttpPost("remove")]
+        [HttpDelete("remove")]
         public async Task<IActionResult> RemoveStudent(RemoveStudentRequest request)
         {
             return await _dbService.RemoveStudent(request);
