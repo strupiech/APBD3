@@ -22,19 +22,19 @@ namespace Cw3.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStudents()
         {
-            return Ok(await _dbService.GetStudents());
+            return await _dbService.GetStudents();
         }
 
         [HttpPut("modify")]
         public async Task<IActionResult> ModifyStudent(ModifyStudentRequest request)
         {
-            return Ok(await _dbService.ModifyStudent(request));
+            return await _dbService.ModifyStudent(request);
         }
         
         [HttpPost("remove")]
         public async Task<IActionResult> RemoveStudent(RemoveStudentRequest request)
         {
-            return Ok(await _dbService.RemoveStudent(request));
+            return await _dbService.RemoveStudent(request);
         }
     }
 }
