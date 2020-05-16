@@ -3,6 +3,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Cw3.DTOs.Requests;
+using Cw3.DTOs.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,7 +60,15 @@ namespace Cw3.Services
             });
 
             await _context.SaveChangesAsync();
-            return new AcceptedResult();
+            return new OkObjectResult(new EnrollStudentResponse()
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                BirthDate = request.BirthDate,
+                IndexNumber = request.IndexNumber,
+                Semester = 1,
+                StudiesName = request.StudiesName
+            });
         }
 
         public async Task<IActionResult> PromoteStudents(PromoteStudentsRequest request)
@@ -89,7 +98,11 @@ namespace Cw3.Services
                 return new BadRequestResult();
             }
 
-            return new AcceptedResult();
+            return new OkObjectResult(new PromoteStudentsResponse()
+            {
+                StudiesName = request.StudiesName,
+                Semester = request.Semester
+            });
         }
 
         public async Task<IActionResult> GetStudents()
