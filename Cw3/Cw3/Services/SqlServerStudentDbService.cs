@@ -90,7 +90,7 @@ namespace Cw3.Services
 
             try
             {
-                _context.Database.ExecuteSqlInterpolated($"PromoteStudents {request.Semester},{request.StudiesName}");
+                _context.Database.ExecuteSqlRaw($"PromoteStudents {request.Semester},{request.StudiesName}");
             }
             catch (Exception e)
             {
