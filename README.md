@@ -1,4 +1,4 @@
-# Students REST API Code first
+# Students REST API database first
 Zawiera: </br>
 - CRUD studenta </br>
 - uwierzytelnianie studenta </br>
